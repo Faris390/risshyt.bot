@@ -1,7 +1,37 @@
 const { writeExif } = require('../lib/function'); 
 const fs = require('fs');
 
-// --- ASUMSI: Fungsi Solving dan GroupParticipantsUpdate dihilangkan untuk fokus ---
+// =========================================================
+// === FUNGSI TAMBAHAN (Wajib diekspor) ======================
+// =========================================================
+
+async function Solving(conn, store) {
+    console.log('✅ Fungsi Solving (Persiapan Awal) Selesai.');
+}
+
+async function GroupParticipantsUpdate(conn, update) {
+    const { id, participants, action } = update;
+    
+    // Logika Welcome/Goodbye
+    console.log(`[GROUP UPDATE] Group ID: ${id}, Aksi: ${action}`);
+
+    if (action === 'add') {
+        const participantId = participants[0];
+        const welcomeText = `Selamat datang @${participantId.split('@')[0]} di grup!`;
+        await conn.sendMessage(id, { text: welcomeText, contextInfo: { mentionedJid: participants } });
+    }
+    
+    if (action === 'remove') {
+        const participantId = participants[0];
+        const goodbyeText = `Selamat jalan @${participantId.split('@')[0]}.`;
+        await conn.sendMessage(id, { text: goodbyeText, contextInfo: { mentionedJid: participants } });
+    }
+}
+
+
+// =========================================================
+// === FUNGSI UTAMA PESAN ==================================
+// =========================================================
 
 async function MessagesUpsert(conn, message, store) {
     const m = message.messages[0];
@@ -54,36 +84,37 @@ async function MessagesUpsert(conn, message, store) {
                 }, { quoted: m });
                 break;
 
-            // --- KONVERSI STIKER ---
+            // --- KONVERSI STIKER (LOGIKA SUDAH DIPERBAIKI) ---
             case 'stiker':
             case 's':
                 
-                // Pastikan ada media yang dibalas dan media tersebut adalah gambar, video, atau GIF
-                if (!quoted || (!isImage && !isVideo)) {
+                // Cek apakah ada media yang dibalas
+                const mediaMsg = quoted?.imageMessage || quoted?.videoMessage;
+                const isQuotedMedia = !!mediaMsg;
+
+                if (!isQuotedMedia) {
                     return conn.sendMessage(remoteJid, { text: '⚠️ Balas (*reply*) gambar, video (maks 5 detik), atau GIF yang ingin dijadikan stiker.' }, { quoted: m });
                 }
 
                 await conn.sendMessage(remoteJid, { text: '⏳ Sedang mengonversi media ke stiker...' }, { quoted: m });
                 
                 try {
-                    // 1. Download Media yang Dibalas (Baileys helper)
-                    const mediaBufferPath = await conn.downloadAndSaveMediaMessage(m, 'buffer'); // Download sebagai path file sementara
+                    // 1. Download media sebagai Buffer (Cara Baileys modern yang benar)
+                    const mediaBuffer = await conn.downloadMediaMessage(mediaMsg, 'buffer', {}); 
                     
-                    // 2. Tentukan metadata stiker (dari settings.js)
+                    // 2. Tentukan metadata stiker
                     const stickerData = { 
                         packname: global.packname, 
                         author: global.author 
                     };
                     
-                    // 3. Konversi ke WEBP dan Tambahkan EXIF
-                    const finalStickerPath = await writeExif(fs.readFileSync(mediaBufferPath), stickerData); 
+                    // 3. Konversi ke WEBP dan Tambahkan EXIF (Diasumsikan writeExif menerima buffer)
+                    const finalStickerBuffer = await writeExif(mediaBuffer, stickerData); 
                     
-                    // 4. Kirim Stiker
-                    await conn.sendMessage(remoteJid, { sticker: { url: finalStickerPath } }, { quoted: m });
+                    // 4. Kirim Stiker (Mengirim Buffer)
+                    await conn.sendMessage(remoteJid, { sticker: finalStickerBuffer }, { quoted: m });
                     
-                    // 5. Hapus file sementara setelah dikirim
-                    fs.unlinkSync(finalStickerPath); 
-                    fs.unlinkSync(mediaBufferPath);
+                    // TIDAK PERLU HAPUS FILE SEMENTARA karena menggunakan buffer
                     
                 } catch (error) {
                     console.error("Error saat membuat stiker:", error);
@@ -92,11 +123,17 @@ async function MessagesUpsert(conn, message, store) {
                 break;
 
             default:
-                // Abaikan command lain yang tidak terdaftar
                 break;
         }
     }
 }
 
-module.exports = { MessagesUpsert }
-      
+// =========================================================
+// === EXPORT SEMUA FUNGSI (Untuk menghindari 'is not defined')
+// =========================================================
+
+module.exports = { 
+    MessagesUpsert,
+    GroupParticipantsUpdate, 
+    Solving                  
+}
