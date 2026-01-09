@@ -1,31 +1,31 @@
 {
-  "name": "risshyt-bot-project",
+  "name": "risshyt-bot-wa",
   "version": "1.0.0",
-  "description": "WhatsApp Bot powered by Baileys Multi Device",
+  "description": "WhatsApp Bot with Baileys and Sticker Feature",
   "main": "index.js",
+  "type": "commonjs",
   "scripts": {
     "start": "node index.js"
   },
   "keywords": [
-    "whatsapp-bot",
+    "whatsapp",
     "baileys",
-    "nodejs"
+    "nodejs",
+    "sticker-bot"
   ],
-  "author": "Risshyt",
+  "author": "NazeDev",
   "license": "ISC",
   "dependencies": {
-    "@hapi/boom": "^10.0.1",
-    "awesome-phonenumber": "^5.12.0",
+    "@adiwajshing/baileys": "^6.5.0",
     "axios": "^1.6.8",
-    "baileys": "^6.7.7",
-    "chalk": "^4.1.2",
-    "express": "^4.18.3",
-    "http": "0.0.1-security",
-    "node-cache": "^5.1.2",
-    "pino": "^8.20.0",
+    "buffer": "^6.0.3",
+    "file-type": "^16.5.3",
+    "fluent-ffmpeg": "^2.1.2",
+    "node-webpmux": "^3.1.2",
     "path": "^0.12.7",
+    "pino": "^7.11.0",
     "qrcode": "^1.5.3",
-    "qrcode-terminal": "^0.12.0"
+    "ytdl-core": "^4.11.5",
+    "crypto": "^1.0.1"
   }
 }
-
