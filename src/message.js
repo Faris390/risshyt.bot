@@ -30,7 +30,7 @@ async function MessagesUpsert(conn, message, store) {
             // --- MENU & INFO ---
             case 'menu':
             case 'help':
-                let menuText = `Halo, saya ${global.packname}!\n\n`;
+                let menuText = `${global.packname}!\n\n`;
                 menuText += '━━━ *FITUR UTAMA* ━━━\n';
                 menuText += `* ${prefix}stiker (Balas Gambar/Video/GIF)\n`;
                 menuText += '━━━ *BOT INFO* ━━━\n';
