@@ -1,4 +1,4 @@
-require('./settings');
+Require('./settings');
 const fs = require('fs');
 const os = require('os');
 const pino = require('pino');
@@ -11,12 +11,15 @@ const NodeCache = require('node-cache');
 const { toBuffer } = require('qrcode');
 const { exec } = require('child_process');
 const { parsePhoneNumber } = require('awesome-phonenumber');
-const { default: WAConnection, useMultiFileAuthState, Browsers, DisconnectReason, makeCacheableSignalKeyStore, fetchLatestBaileysVersion, jidNormalizedUser } = require('baileys');
+const { default: WAConnection, useMultiFileAuthState, Browsers, DisconnectReason, makeCacheableSignalKeyStore, fetchLatestBaileysVersion, jidNormalizedUser } = require('@whiskeysockets/baileys');
 
 // Pastikan semua file ini ada di folder src/ dan lib/
 const { dataBase } = require('./src/database'); 
 const { app, server, PORT } = require('./src/server'); 
+
+// IMPORT KETIGA FUNGSI (Memastikan tidak ada error 'is not defined')
 const { GroupParticipantsUpdate, MessagesUpsert, Solving } = require('./src/message'); 
+
 const { assertInstalled } = require('./lib/function'); 
 
 // --- Inisialisasi & Konfigurasi Awal ---
@@ -39,21 +42,18 @@ const storeDB = dataBase(global.tempatStore);
 const database = dataBase(global.tempatDB);
 const msgRetryCounterCache = new NodeCache();
 
-assertInstalled(process.platform === 'win32' ? 'where ffmpeg' : 'command -v ffmpeg', 'FFmpeg', 0);
+// Pastikan FFmpeg terinstal untuk stiker video
+assertInstalled(process.platform === 'win32' ? 'where ffmpeg' : 'command -v ffmpeg', 'FFmpeg', 0); 
 console.log(chalk.greenBright('✅  All external dependencies are satisfied'));
 console.log(chalk.green.bold(`╔═════[${`${chalk.cyan(userInfoSyt())}@${chalk.cyan(os.hostname())}`}]═════`));
 print('Script version', `v${require('./package.json').version}`);
-print('Bot Name', global.packname); // Menambahkan nama bot
-// ... (tambahkan print info sistem lainnya di sini)
+print('Bot Name', global.packname); 
 
 console.log(chalk.green.bold('╚' + ('═'.repeat(30))));
 server.listen(PORT, () => {
 	console.log('App listened on port', PORT);
 });
 
-/*
-	* Create By Risshyt
-*/
 
 async function startRisshytBot() {
   
@@ -63,8 +63,6 @@ async function startRisshytBot() {
 	
 	try {
 		// loading database
-        
-        // --- Bagian Loading DB/Store ---
         const loadData = await database.read();
         const storeLoadData = await storeDB.read();
         
@@ -111,6 +109,9 @@ async function startRisshytBot() {
 		},
 	})
 	
+    // PANGGIL FUNGSI SOLVING SAAT STARTUP (wajib ada karena diimpor)
+	await Solving(risshyt, store) 
+	
 	if (pairingCode && !phoneNumber && !risshyt.authState.creds.registered) {
 		async function getPhoneNumber() {
 			phoneNumber = global.number_bot ? global.number_bot : process.env.BOT_NUMBER || await question('Please type your WhatsApp number : ');
@@ -129,7 +130,6 @@ async function startRisshytBot() {
 		})()
 	}
 	
-	await Solving(risshyt, store) // Melewatkan risshyt ke Solving
 	
 	risshyt.ev.on('creds.update', saveCreds)
 	
@@ -149,8 +149,7 @@ async function startRisshytBot() {
         
 		if (connection === 'close') {
 			const reason = new Boom(lastDisconnect?.error)?.output.statusCode
-            // Logic Reconnect/Exit (Ganti pemanggilan startRisshytBot() di setiap kondisi)
-            // ...
+            // Logic Reconnect/Exit
 			if (reason === DisconnectReason.loggedOut) {
 				console.log('Scan again and Run...');
 				exec(`rm -rf ./${global.session_folder}/*`); // Hapus folder sesi
@@ -174,32 +173,22 @@ async function startRisshytBot() {
 		}
 	});
 	
-	// Event contacts.update, call, messages.upsert, group-participants.update, groups.update, presence.update
-	
+	// Event listeners:
+
+	// 1. PESAN MASUK
 	risshyt.ev.on('messages.upsert', async (message) => {
 		await MessagesUpsert(risshyt, message, store);
 	});
 	
-	// ... (Event listeners lainnya, pastikan menggunakan risshyt)
+	// 2. PESERTA GRUP (Wajib dipanggil karena diimpor)
+    risshyt.ev.on('group-participants.update', async (update) => {
+		await GroupParticipantsUpdate(risshyt, update);
+	});
 	
 	return risshyt
 }
 
 // Panggil fungsi startup bot
 startRisshytBot()
-
 // ... (Proses Exit dan Cleanup)
-const cleanup = async (signal) => {
-	console.log(`Received ${signal}. Menyimpan database...`)
-	if (global.db) await database.write(global.db)
-	if (global.store) await storeDB.write(global.store)
-	server.close(() => {
-		console.log('Server closed. Exiting...')
-		process.exit(0)
-	})
-}
-
-process.on('SIGINT', () => cleanup('SIGINT'))
-process.on('SIGTERM', () => cleanup('SIGTERM'))
-// ...
-                                                                                                            
+	
