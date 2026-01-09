@@ -1,1 +1,31 @@
+{
+  "name": "risshyt-bot-project",
+  "version": "1.0.0",
+  "description": "WhatsApp Bot powered by Baileys Multi Device",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "keywords": [
+    "whatsapp-bot",
+    "baileys",
+    "nodejs"
+  ],
+  "author": "Risshyt",
+  "license": "ISC",
+  "dependencies": {
+    "@hapi/boom": "^10.0.1",
+    "awesome-phonenumber": "^5.12.0",
+    "axios": "^1.6.8",
+    "baileys": "^6.7.7",
+    "chalk": "^4.1.2",
+    "express": "^4.18.3",
+    "http": "0.0.1-security",
+    "node-cache": "^5.1.2",
+    "pino": "^8.20.0",
+    "path": "^0.12.7",
+    "qrcode": "^1.5.3",
+    "qrcode-terminal": "^0.12.0"
+  }
+}
 
